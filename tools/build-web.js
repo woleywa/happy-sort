@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const root = path.join(__dirname, '..');
 const out = path.join(root, 'www');
-const FILES = ['index.html', 'style.css', 'game.js', 'sw.js', 'manifest.webmanifest', 'icons'];
+const FILES = ['index.html', 'style.css', 'js', 'sw.js', 'manifest.webmanifest', 'icons'];
 // A number per build (the GitHub run number; 0 locally), for live updates in the apps later.
 const BUILD = +(process.env.GITHUB_RUN_NUMBER || 0);
 

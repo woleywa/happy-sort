@@ -5,13 +5,15 @@
 ## Playable game
 - ✅ Pour rules, 4-layer bottles, solvable generated levels, mystery `?` layers, undo, extra bottle, coins, saved progress
 - ✅ Public website on GitHub Pages (`.github/workflows/pages.yml`)
+- ✅ New look: canvas bottles with level-liquid physics, pouring stream, splashes, wobble, corks, sparkles, confetti, 3D buttons, settings
+- ✅ Sound (Web Audio) and haptics (Capacitor / vibrate / iOS switch trick)
 
 ## 1. Core mechanics from the Magic Sort screenshot (the features promised earlier)
 - 🔨 **Frozen bottles**: ice blocks pouring in or out until N pours happened elsewhere (ice count-down, thaw sparks)
 - 🔨 **Locked curtain bottles**: red curtain with evil-eye locks; each completed colour removes one lock
-- 🔨 **Shuffle power-up** (the middle button): reshuffles the colours that aren't finished
+- ✅ **Shuffle power-up** (the middle button): reshuffles the colours that aren't finished
 - 🔨 **Coin shop**: spend coins on undo / shuffle / extra bottle (the 19 / 14 / 7 counters)
-- 🔨 **Sound + haptics + effects**: pouring stream, glug, win chime, confetti; sound and haptics switches in Settings *(from Unblock-it: audio.js, Native.buzz)*
+- ✅ **Sound + haptics + effects**: pouring stream, glug, win chime, confetti; sound and haptics switches in Settings *(from Unblock-it: audio.js, Native.buzz)*
 - 💡 More levels types: bottles with 5–6 slots, bigger boards, time challenges
 
 ## 2. Web app / mobile website *(from Unblock-it)*

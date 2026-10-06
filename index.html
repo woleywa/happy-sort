@@ -4,39 +4,66 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
   <meta name="theme-color" content="#0d1033">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Happy Sort</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap">
+  <link rel="stylesheet" href="style.css?v=2">
 </head>
 <body>
-  <div id="app">
+  <canvas id="stage" aria-label="Bottles"></canvas>
+
+  <div id="ui">
     <header class="top">
-      <div class="coins"><span class="coin">★</span><span id="coins">0</span></div>
-      <button id="restart" class="icon-btn" title="Restart level" aria-label="Restart level">↻</button>
+      <div class="coins"><span class="coin"><svg viewBox="0 0 24 24"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/></svg></span><span id="coins">0</span></div>
+      <button id="open-settings" class="btn3d square" aria-label="Settings">
+        <svg viewBox="0 0 24 24"><path d="M19.4 13a7.5 7.5 0 000-2l2-1.6-2-3.4-2.4 1a7.6 7.6 0 00-1.7-1L15 3.5h-4l-.4 2.5a7.6 7.6 0 00-1.7 1l-2.4-1-2 3.4L6.6 11a7.5 7.5 0 000 2l-2 1.6 2 3.4 2.4-1c.5.4 1.1.8 1.7 1l.4 2.5h4l.4-2.5c.6-.2 1.2-.6 1.7-1l2.4 1 2-3.4zM12 15.5a3.5 3.5 0 110-7 3.5 3.5 0 010 7z"/></svg>
+      </button>
     </header>
 
-    <div class="level-badge">Level <span id="level">1</span></div>
+    <div id="level-badge" class="level-badge">Level <span id="level">1</span></div>
 
-    <main id="board" aria-label="Bottles"></main>
-
-    <footer class="toolbar">
-      <button id="undo" class="tool" aria-label="Undo">
-        <span class="tool-icon">↶</span><span class="count" id="undo-count">0</span>
+    <footer id="toolbar" class="toolbar">
+      <button id="undo" class="btn3d tool" aria-label="Undo">
+        <svg viewBox="0 0 24 24"><path d="M12.5 5a7 7 0 11-6.6 9.3l2.3-.8A4.6 4.6 0 1012.5 7.4H9.8l2.6 2.6-1.7 1.7L5.2 6.2 10.7.7l1.7 1.7L9.8 5z"/></svg>
+        <span class="count" id="undo-count">0</span>
       </button>
-      <button id="add-bottle" class="tool" aria-label="Add bottle">
-        <span class="tool-icon">＋▯</span><span class="count" id="add-count">0</span>
+      <button id="shuffle" class="btn3d tool" aria-label="Shuffle">
+        <svg viewBox="0 0 24 24"><path d="M16 4l4 3.5-4 3.5V8.7h-1.3c-1.4 0-2.3.7-3.2 2l-3 4.6c-1.3 2-2.8 3-5 3H2.5v-2.4h1c1.3 0 2-.5 2.9-1.8l3-4.6C10.7 7.4 12.3 6.3 14.7 6.3H16zM2.5 6.3h1c2.2 0 3.6 1 4.8 2.7l-1.4 2.1c-.9-1.5-1.8-2.4-3.4-2.4h-1zM16 13l4 3.5-4 3.5v-2.3h-1.3c-2.3 0-3.8-1-5-2.6l1.4-2.1c.9 1.4 1.8 2.3 3.6 2.3H16z"/></svg>
+        <span class="count" id="shuffle-count">0</span>
+      </button>
+      <button id="add-bottle" class="btn3d tool" aria-label="Add bottle">
+        <svg viewBox="0 0 24 24"><path d="M14 2h4v2.2h-.6v2.4c1.5.8 2.6 2.4 2.6 4.2v9.4c0 1-.8 1.8-1.8 1.8h-4.4c-1 0-1.8-.8-1.8-1.8v-9.4c0-1.8 1-3.4 2.6-4.2V4.2H14zM2 11h3V8h2.4v3h3v2.4h-3v3H5v-3H2z"/></svg>
+        <span class="count" id="add-count">0</span>
       </button>
     </footer>
-
-    <div id="win" class="overlay hidden">
-      <div class="card">
-        <h2>Level complete!</h2>
-        <p id="win-reward">+10 coins</p>
-        <button id="next" class="primary">Next level</button>
-      </div>
-    </div>
-
-    <div id="toast" class="toast hidden"></div>
   </div>
-  <script src="game.js"></script>
+
+  <div id="win" class="overlay hidden">
+    <div class="card win-card">
+      <div class="ribbon">Level complete!</div>
+      <div class="reward"><span class="coin big"><svg viewBox="0 0 24 24"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/></svg></span><span id="win-reward">+10</span></div>
+      <button id="next" class="btn3d wide green">Next level</button>
+    </div>
+  </div>
+
+  <div id="settings" class="overlay hidden">
+    <div class="card">
+      <div class="ribbon">Settings</div>
+      <button id="opt-sound" class="toggle"><span>Sound</span><i></i></button>
+      <button id="opt-haptics" class="toggle"><span>Vibration</span><i></i></button>
+      <button id="restart" class="btn3d wide">Restart level</button>
+      <button id="close-settings" class="btn3d wide green">Close</button>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="js/logic.js?v=2"></script>
+  <script src="js/fx.js?v=2"></script>
+  <script src="js/render.js?v=2"></script>
+  <script src="js/game.js?v=2"></script>
 </body>
 </html>

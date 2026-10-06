@@ -1,5 +1,5 @@
 const assert = require('assert');
-const L = require('../game.js');
+const L = require('../js/logic.js');
 
 const mk = arr => arr.map(b => b.map(c => ({ c, hidden: false })));
 
@@ -35,3 +35,17 @@ for (let lvl = 1; lvl <= 60; lvl++) {
   assert.ok(b.every(x => !x.length || !x[x.length - 1].hidden), 'top visible lvl ' + lvl);
 }
 console.log('all tests passed');
+
+// Shuffle keeps colour counts, fill heights and finished bottles, and stays solvable
+for (let lvl = 1; lvl <= 20; lvl++) {
+  const b = L.generateLevel(lvl);
+  L.pour(b, 0, b.length - 1);
+  const heights = b.map(x => x.length);
+  const count = g => { const m = {}; g.flat().forEach(l => m[l.c] = (m[l.c] || 0) + 1); return JSON.stringify(Object.entries(m).sort()); };
+  const before = count(b);
+  assert.ok(L.shuffle(b, L.rng(lvl)), 'shuffle lvl ' + lvl);
+  assert.deepStrictEqual(b.map(x => x.length), heights);
+  assert.strictEqual(count(b), before);
+  assert.ok(L.solvable(b.map(x => x.map(l => l.c)), 1e6));
+}
+console.log('shuffle tests passed');

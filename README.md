@@ -9,12 +9,17 @@ win.
 ## Features
 
 - Bottles hold 4 layers. Every matching layer on top pours at once, as many as fit.
-- Generated levels get harder as you go (3 colours at first, up to 12), and a
-  built-in solver checks that every level can be solved.
-- Mystery `?` layers from level 6 onward. They show their colour once they reach the top.
-- Undo (5 per level), +1 extra bottle per level, restart.
-- Coins, and saved progress (in localStorage).
-- Plain HTML/CSS/JS, so there is no build step and nothing to install.
+- Canvas renderer with real liquid physics: the liquid stays level in a tilted bottle, the bottle tips
+  further as it empties, a stream pours into the target and splashes, and the liquid wobbles.
+- Finished bottles get a cork, sparkles and a golden glow. Winning brings confetti and a coin count-up.
+- Sound is synthesised with Web Audio (rising glugs, cork pop, chimes). Haptics use Capacitor in the
+  native apps, `navigator.vibrate` on Android and the `<input switch>` trick on iPhone Safari 18+.
+- Generated levels get harder as you go (3 colours at first, up to 12), and a built-in solver checks
+  that every level can be solved.
+- Mystery `?` layers from level 6 onward. They flash into their colour once they reach the top.
+- Undo (5 per level), shuffle (keeps the board solvable), +1 extra bottle per level, restart.
+- Settings for sound and vibration. Coins and progress are saved on the device (localStorage).
+- Plain HTML/CSS/JS, so there is no build step. Live at https://woleywa.github.io/happy-sort/.
 
 ## Run
 
@@ -34,7 +39,12 @@ node test/logic.test.js
 
 | File | Purpose |
 | --- | --- |
-| `game.js` | Game rules, solver, level generator (exported for Node tests) and the UI |
-| `style.css` | Visuals: bottles, liquid layers, toolbar, overlays |
-| `index.html` | Page shell |
-| `test/logic.test.js` | Rule tests, plus a check that levels 1–60 can all be solved |
+| `js/logic.js` | Rules, solver, level generator, shuffle (no DOM; also loaded by the Node tests) |
+| `js/render.js` | Bottle geometry, level-liquid physics, canvas drawing |
+| `js/fx.js` | Sound and haptics |
+| `js/game.js` | Game screen: state, input, pour animation, particles, toolbar, settings |
+| `index.html`, `style.css` | Page shell, UI chrome |
+| `tools/build-web.js` | Copies the game into `www/`, which GitHub Pages serves |
+| `test/logic.test.js` | Rule tests, a check that levels 1–60 can all be solved, shuffle tests |
+
+When you change a file, bump the `?v=N` on the script and style tags in `index.html` so phones pick up the new version.
