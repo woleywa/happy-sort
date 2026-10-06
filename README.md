@@ -11,9 +11,13 @@ win.
 - Bottles hold 4 layers. Every matching layer on top pours at once, as many as fit.
 - Canvas renderer with real liquid physics: the liquid stays level in a tilted bottle, the bottle tips
   further as it empties, a stream pours into the target and splashes, and the liquid wobbles.
-- Finished bottles get a cork, sparkles and a golden glow. Winning brings confetti and a coin count-up.
-- Sound is synthesised with Web Audio (rising glugs, cork pop, chimes). Haptics use Capacitor in the
-  native apps, `navigator.vibrate` on Android and the `<input switch>` trick on iPhone Safari 18+.
+- Several pours can run at once, including two bottles filling the same one from both sides. A pour
+  that depends on another one waits for it, then starts by itself.
+- Finished bottles get a cork and sparkles. Winning brings confetti and a coin count-up.
+- Sounds are modelled in Web Audio rather than beeped: glass clinks, water bubbles that rise in pitch
+  as the bottle fills, a cork, bell chimes, and a small room reverb. Haptics are single soft taps, and
+  only on select, pour, finished bottle and win. They use Capacitor in the native apps,
+  `navigator.vibrate` on Android and the `<input switch>` trick on iPhone Safari 18+.
 - Generated levels get harder as you go (3 colours at first, up to 12), and a built-in solver checks
   that every level can be solved.
 - Mystery `?` layers from level 6 onward. They flash into their colour once they reach the top.

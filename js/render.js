@@ -10,15 +10,15 @@ const Render = (() => {
     const g = {
       w, h,
       t: Math.max(2, w * 0.05),   // glass thickness
-      nw: w * 0.44,               // neck width
-      neckH: h * 0.1,
-      shH: h * 0.1,               // shoulder height
-      r: w * 0.3,                 // bottom corner radius
+      nw: w * 0.46,               // neck width
+      neckH: h * 0.085,
+      shH: h * 0.085,             // shoulder height
+      r: w * 0.42,                // bottom corner radius
     };
     g.inner = shape(g, g.t);
     g.lipX = g.nw / 2 - g.t;
     // Four units fill the body up to just under the shoulder.
-    const fillY = g.neckH + g.shH + h * 0.05;
+    const fillY = g.neckH + g.shH + h * 0.045;
     g.unit = areaBelow(g.inner, fillY) / 4;
     g.fillY = fillY;
     g.angleCache = new Map();
@@ -132,7 +132,7 @@ const Render = (() => {
     const m = s => Math.round(ch(a, s) + (ch(b, s) - ch(a, s)) * t);
     return `rgb(${m(16)},${m(8)},${m(0)})`;
   }
-  const HIDDEN = '#1a1b3a';
+  const HIDDEN = '#121327';
 
   // ---------- Drawing ----------
   function outerPath(ctx, pts) {
@@ -148,38 +148,35 @@ const Render = (() => {
 
   /**
    * layers: [{ color, vol (units), hidden, reveal (0..1, optional) }] bottom first.
-   * o: { selected, complete, cork (0..1 drop progress, or null), slope (wobble), glow (0..1), now }
+   * o: { selected, cork (0..1 drop progress, or null), slope (wobble), now }
    */
   function drawBottle(ctx, g, pose, layers, o = {}) {
     if (!g.outer) g.outer = shape(g, 0);
     const world = toWorld(g.inner, pose);
     const bb = bbox(world);
+    const upright = Math.abs(pose.a) < 0.02;
 
-    // Glow behind finished bottles.
-    if (o.complete) {
-      const cx = (bb.x0 + bb.x1) / 2, cy = (bb.y0 + bb.y1) / 2;
-      const pulse = 0.75 + 0.25 * Math.sin((o.now || 0) / 400);
-      const rg = ctx.createRadialGradient(cx, cy, g.w * 0.2, cx, cy, g.h * 0.75);
-      rg.addColorStop(0, `rgba(255,220,120,${0.35 * pulse})`);
-      rg.addColorStop(1, 'rgba(255,220,120,0)');
-      ctx.fillStyle = rg;
-      ctx.fillRect(cx - g.h, cy - g.h, g.h * 2, g.h * 2);
-    }
-
-    // Back of the glass.
+    // Back of the glass: dark, slightly see-through.
     ctx.save();
     applyPose(ctx, pose);
     outerPath(ctx, g.outer);
     const back = ctx.createLinearGradient(-g.w / 2, 0, g.w / 2, 0);
-    back.addColorStop(0, 'rgba(120,150,255,0.16)');
-    back.addColorStop(0.5, 'rgba(40,50,120,0.28)');
-    back.addColorStop(1, 'rgba(120,150,255,0.16)');
+    back.addColorStop(0, 'rgba(70,90,170,0.30)');
+    back.addColorStop(0.5, 'rgba(10,12,40,0.55)');
+    back.addColorStop(1, 'rgba(70,90,170,0.30)');
     ctx.fillStyle = back;
     ctx.fill();
     ctx.restore();
 
     // Liquid.
-    const vis = layers.filter(l => l.vol > 0.002);
+    // Merge neighbouring layers of the same colour so they draw as one body of liquid.
+    const vis = [];
+    for (const l of layers) {
+      if (l.vol <= 0.002) continue;
+      const last = vis[vis.length - 1];
+      if (last && !l.hidden && !last.hidden && l.reveal == null && last.reveal == null && last.color === l.color) last.vol += l.vol;
+      else vis.push({ ...l });
+    }
     if (vis.length) {
       ctx.save();
       outerPath(ctx, world);
@@ -195,103 +192,82 @@ const Render = (() => {
         ctx.lineTo(X0, yBot + (X0 - cx) * s);
         ctx.closePath();
       };
+      const fillOf = l => {
+        const r = l.reveal;
+        if (l.hidden) return HIDDEN;
+        if (r != null && r < 1) return r < 0.35 ? mix(HIDDEN, '#ffffff', r / 0.35) : mix('#ffffff', l.color, (r - 0.35) / 0.65);
+        return l.color;
+      };
       let cum = 0, prev = bb.y1 + g.h;
       const bands = [];
       for (const l of vis) {
         cum += l.vol * g.unit;
         const y = surface(world, cum, bb);
-        bands.push({ l, top: y, bot: prev });
+        bands.push({ l, top: y, bot: prev, fill: fillOf(l) });
         prev = y;
       }
       const topY = prev;
-      for (const { l, top, bot } of bands) {
-        band(top, bot);
-        const r = l.reveal;
-        if (l.hidden) ctx.fillStyle = HIDDEN;
-        else if (r != null && r < 1) ctx.fillStyle = r < 0.35 ? mix(HIDDEN, '#ffffff', r / 0.35) : mix('#ffffff', l.color, (r - 0.35) / 0.65);
-        else ctx.fillStyle = l.color;
+      // Upright, the top surface is drawn as an ellipse so the liquid reads as a cylinder.
+      const ry = upright ? g.w * 0.085 : 0;
+      for (const b of bands) {
+        band(b.top, b.bot);
+        ctx.fillStyle = b.fill;
         ctx.fill();
       }
-      // Volume shading, only below the top surface.
+      // Rounded shading across the liquid (cylinder), only below the top surface.
       ctx.save();
       band(topY, bb.y1 + g.h);
       ctx.clip();
       ctx.save();
       applyPose(ctx, pose);
       const sh = ctx.createLinearGradient(-g.w / 2, 0, g.w / 2, 0);
-      sh.addColorStop(0, 'rgba(0,0,0,0.28)');
-      sh.addColorStop(0.22, 'rgba(255,255,255,0.10)');
-      sh.addColorStop(0.45, 'rgba(255,255,255,0)');
-      sh.addColorStop(0.8, 'rgba(0,0,0,0.12)');
-      sh.addColorStop(1, 'rgba(0,0,0,0.35)');
+      sh.addColorStop(0, 'rgba(0,0,0,0.30)');
+      sh.addColorStop(0.3, 'rgba(255,255,255,0.08)');
+      sh.addColorStop(0.55, 'rgba(255,255,255,0)');
+      sh.addColorStop(1, 'rgba(0,0,0,0.32)');
       ctx.fillStyle = sh;
       ctx.fillRect(-g.w, -g.h, g.w * 2, g.h * 3);
       ctx.restore();
       ctx.restore();
-      // Shine on the top surface and faint lines between layers.
+      // Top surface.
       const top = bands[bands.length - 1];
-      if (!top.l.hidden) {
-        band(topY - 1, topY + Math.max(3, g.h * 0.022));
-        ctx.fillStyle = mix(top.l.color.startsWith('#') ? top.l.color : '#888888', '#ffffff', 0.4);
+      const xs = chord(world, topY + 0.5);
+      if (ry && xs) {
+        const rx = (xs[1] - xs[0]) / 2 + 1;
+        ctx.beginPath();
+        ctx.ellipse((xs[0] + xs[1]) / 2, topY, rx, ry, 0, 0, Math.PI * 2);
+        ctx.fillStyle = top.l.hidden ? '#26284f' : top.fill.startsWith('#') ? mix(top.fill, '#ffffff', 0.28) : top.fill;
         ctx.fill();
       }
-      ctx.lineWidth = 1;
-      ctx.strokeStyle = 'rgba(0,0,0,0.18)';
-      for (let i = 0; i < bands.length - 1; i++) {
-        if (bands[i].l.color === bands[i + 1].l.color && !bands[i].l.hidden && !bands[i + 1].l.hidden) continue;
-        const y = bands[i].top;
-        ctx.beginPath();
-        ctx.moveTo(X0, y + (X0 - cx) * s);
-        ctx.lineTo(X1, y + (X1 - cx) * s);
-        ctx.stroke();
-      }
       // "?" on hidden layers.
-      ctx.fillStyle = 'rgba(150,155,230,0.75)';
-      ctx.font = `900 ${Math.round(g.w * 0.36)}px "Fredoka", "Trebuchet MS", sans-serif`;
+      ctx.fillStyle = 'rgba(140,145,200,0.7)';
+      ctx.font = `700 ${Math.round(g.w * 0.34)}px "Fredoka", "Trebuchet MS", sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      for (const { l, top, bot } of bands) {
+      for (const { l, top: t, bot } of bands) {
         if (!l.hidden) continue;
-        const y = (top + Math.min(bot, bb.y1)) / 2;
-        const xs = chord(world, y);
-        if (xs) ctx.fillText('?', (xs[0] + xs[1]) / 2, y);
+        const y = (t + Math.min(bot, bb.y1)) / 2;
+        const c = chord(world, y);
+        if (c) ctx.fillText('?', (c[0] + c[1]) / 2, y);
       }
       ctx.restore();
     }
 
-    // Front of the glass: rim, outline, highlights, cork.
+    // Front of the glass: thin outline and rim.
     ctx.save();
     applyPose(ctx, pose);
     outerPath(ctx, g.outer);
-    if (o.selected) {
-      ctx.shadowColor = 'rgba(255,255,255,0.9)';
-      ctx.shadowBlur = 18;
-    }
-    ctx.lineWidth = Math.max(2, g.w * 0.035);
-    ctx.strokeStyle = o.selected ? 'rgba(255,255,255,0.95)' : 'rgba(200,220,255,0.7)';
+    if (o.selected) { ctx.shadowColor = 'rgba(190,210,255,0.9)'; ctx.shadowBlur = 16; }
+    ctx.lineWidth = Math.max(1.5, g.w * 0.03);
+    ctx.strokeStyle = o.selected ? 'rgba(235,242,255,0.95)' : 'rgba(170,190,255,0.55)';
     ctx.stroke();
     ctx.shadowBlur = 0;
-    // Long highlight on the left, short on the right.
-    ctx.lineCap = 'round';
-    ctx.strokeStyle = 'rgba(255,255,255,0.45)';
-    ctx.lineWidth = g.w * 0.07;
-    ctx.beginPath();
-    ctx.moveTo(-g.w * 0.3, g.neckH + g.shH + g.h * 0.06);
-    ctx.lineTo(-g.w * 0.3, g.h - g.r - g.h * 0.02);
-    ctx.stroke();
-    ctx.strokeStyle = 'rgba(255,255,255,0.22)';
-    ctx.lineWidth = g.w * 0.05;
-    ctx.beginPath();
-    ctx.moveTo(g.w * 0.3, g.neckH + g.shH + g.h * 0.08);
-    ctx.lineTo(g.w * 0.3, g.neckH + g.shH + g.h * 0.2);
-    ctx.stroke();
-    // Rim.
-    const rw = g.nw + g.w * 0.12, rh = Math.max(5, g.h * 0.035);
+    const rw = g.nw + g.w * 0.1, rh = Math.max(5, g.h * 0.032);
     roundRect(ctx, -rw / 2, -rh / 2, rw, rh, rh / 2);
-    ctx.fillStyle = 'rgba(160,185,255,0.35)';
+    ctx.fillStyle = 'rgba(40,50,110,0.9)';
     ctx.fill();
-    ctx.lineWidth = Math.max(1.5, g.w * 0.03);
-    ctx.strokeStyle = 'rgba(220,235,255,0.8)';
+    ctx.lineWidth = Math.max(1.2, g.w * 0.025);
+    ctx.strokeStyle = 'rgba(170,190,255,0.7)';
     ctx.stroke();
     if (o.cork != null) drawCork(ctx, g, o.cork);
     ctx.restore();
