@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#0d1033">
+  <title>Happy Sort</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+    <header class="top">
+      <div class="coins"><span class="coin">★</span><span id="coins">0</span></div>
+      <button id="restart" class="icon-btn" title="Restart level" aria-label="Restart level">↻</button>
+    </header>
+
+    <div class="level-badge">Level <span id="level">1</span></div>
+
+    <main id="board" aria-label="Bottles"></main>
+
+    <footer class="toolbar">
+      <button id="undo" class="tool" aria-label="Undo">
+        <span class="tool-icon">↶</span><span class="count" id="undo-count">0</span>
+      </button>
+      <button id="add-bottle" class="tool" aria-label="Add bottle">
+        <span class="tool-icon">＋▯</span><span class="count" id="add-count">0</span>
+      </button>
+    </footer>
+
+    <div id="win" class="overlay hidden">
+      <div class="card">
+        <h2>Level complete!</h2>
+        <p id="win-reward">+10 coins</p>
+        <button id="next" class="primary">Next level</button>
+      </div>
+    </div>
+
+    <div id="toast" class="toast hidden"></div>
+  </div>
+  <script src="game.js"></script>
+</body>
+</html>
